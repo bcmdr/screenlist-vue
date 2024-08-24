@@ -81,6 +81,7 @@ input {
   padding: 10px;
   width: 300px;
   margin-bottom: 20px;
+  font-size: 16px;
 }
 
 .movies {
