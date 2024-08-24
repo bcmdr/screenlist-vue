@@ -45,6 +45,7 @@ h6 {
 }
 
 button {
+  color: black;
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.5em 1em;
