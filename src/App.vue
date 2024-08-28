@@ -1,7 +1,7 @@
 <!-- src/App.vue -->
 <template>
   <TopNav />
-  <div class="clamp bg-gray-50">
+  <div class="clamp">
     <router-view />
   </div>
   <Footer />
@@ -21,6 +21,9 @@ export default {
 </script>
 
 <style>
+body {
+  @apply bg-gray-50;
+}
 .clamp {
   max-width: var(--max-width);
   width: 100%;
