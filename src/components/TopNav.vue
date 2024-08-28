@@ -10,7 +10,7 @@
           Sign In
         </button>
         <div v-else class="user-dropdown">
-          <span @click="toggleMenu">{{ user.displayName }}</span>
+          <span @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
           <div v-if="menuOpen" class="dropdown-menu">
             <button @click="signOut">Logout</button>
           </div>
