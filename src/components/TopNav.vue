@@ -1,20 +1,25 @@
 <!-- src/components/TopNav.vue -->
 <template>
-  <nav class="top-nav px-2 py-2 bg-gray-950">
-    <div class="clamp flex justify-between items-center gap-2">
+  <nav class="top-nav bg-gray-950">
+    <div class="clamp flex justify-between items-center gap-2 px-2 py-3">
       <div class="logo">
         <a href="/">ScreenList</a>
       </div>
-      <div class="user-menu">
-        <button class="px-2 py-1 text-sm" v-if="!user" @click="signInWithGoogle">
+      <div class="user-menu min-h-3">
+        <transition name="fade">
+        <div class="text-md fade-in" v-if="!user && !loading" @click="signInWithGoogle">
           Sign In
-        </button>
-        <div v-else class="user-dropdown">
-          <span @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
+        </div>
+      </transition>
+
+      <transition name="fade">
+        <div v-if="!loading && user" class="user-dropdown">
+          <span class="text-md fade-in" @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
           <div v-if="menuOpen" class="dropdown-menu">
             <button @click="signOut">Logout</button>
           </div>
         </div>
+      </transition>
       </div>
     </div class="container">
   </nav>
@@ -33,11 +38,13 @@ export default {
   setup() {
     const user = ref(null);
     const menuOpen = ref(false);
+    const loading = ref(true);
 
     // Watch for auth state changes
     onMounted(() => {
       auth.onAuthStateChanged((authUser) => {
         user.value = authUser;
+        loading.value = false;
       });
     });
 
@@ -70,6 +77,7 @@ export default {
       signInWithGoogle,
       toggleMenu,
       signOut,
+      loading,
     };
   },
 };
@@ -108,5 +116,12 @@ export default {
   color: black;
   padding: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 150ms ease-in;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>
