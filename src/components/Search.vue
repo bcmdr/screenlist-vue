@@ -12,9 +12,9 @@
       class="border border-grey-100 shadow rounded-full px-3 py-2 mb-4 w-full"
     />
 
-    <div class="movies grid gap-4" v-if="movies.length">
+    <div class="movies grid gap-4" v-if="filteredMovies.length">
       <div
-        v-for="movie in movies"
+        v-for="movie in filteredMovies"
         :key="movie.id"
         class="movie"
         :class="{ 'no-poster': !movie.poster_path }"
@@ -48,6 +48,7 @@
 
 <script>
 import tmdb from "../tmdb"; // Import the TMDB API configuration
+import debounce from "lodash.debounce";
 
 export default {
   data() {
@@ -56,13 +57,35 @@ export default {
       movies: [],
     };
   },
+  created() {
+    // Create a debounced version of the search function
+    this.debouncedSearch = debounce(this.executeSearch, 300); // 1-second debounce delay
+  },
+  computed: {
+    filteredMovies() {
+      // Filter out movies without a release year
+      return this.movies.filter((movie) => movie.release_date);
+    },
+  },
   methods: {
     handleSearch() {
+      if (this.query.length < 1) {
+        return;
+      } else if (this.query.length === 1) {
+        // If query length is 1, search instantly
+        this.executeSearch();
+      } else {
+        // Debounce the search function for longer queries
+        this.debouncedSearch();
+      }
+    },
+    executeSearch() {
       if (this.query.trim() === "") {
         this.movies = [];
         return;
       }
 
+      // Your search logic here
       tmdb
         .get("/search/movie", {
           params: {
@@ -71,14 +94,16 @@ export default {
           },
         })
         .then((response) => {
-          this.movies = response.data.results;
+          this.movies = response.data.results.sort(
+            (a, b) => b.popularity - a.popularity
+          );
         })
         .catch((error) => {
           console.error("Error fetching movies:", error);
         });
     },
     getPosterUrl(path) {
-      return `https://image.tmdb.org/t/p/w500${path}`;
+      return `https://image.tmdb.org/t/p/w342${path}`;
     },
     trimmedTitle(title) {
       const maxLength = 30; // Set your maximum length here
@@ -100,7 +125,7 @@ export default {
 }
 
 .movies {
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   flex-wrap: wrap;
   justify-items: center;
 }
@@ -108,16 +133,19 @@ export default {
 .movie {
   position: relative;
   width: 100%;
+  aspect-ratio: 2 / 3;
   color: white;
+  max-width: 240px;
 }
 
 .movie img {
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .poster-placeholder {
-  height: auto;
+  width: 100%;
+  height: 100%;
 }
 
 .movie:hover .movie-info {
