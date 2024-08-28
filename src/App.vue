@@ -1,10 +1,12 @@
 <!-- src/App.vue -->
 <template>
-  <TopNav />
-  <div class="clamp">
-    <router-view />
+  <div class="page">
+    <TopNav class="page-top" />
+    <main class="clamp page-body">
+      <router-view />
+    </main>
+    <Footer class="page-bottom" />
   </div>
-  <Footer />
 </template>
 
 <script>
@@ -23,6 +25,19 @@ export default {
 <style>
 body {
   @apply bg-gray-50;
+}
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+.page-top,
+.page-bottom {
+  flex-shrink: 0;
+}
+.page-body {
+  flex-grow: 1;
 }
 .clamp {
   max-width: var(--max-width);

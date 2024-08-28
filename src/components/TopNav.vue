@@ -78,7 +78,6 @@ export default {
 <style scoped>
 .top-nav {
   color: white;
-  margin: auto;
 }
 
 .container {

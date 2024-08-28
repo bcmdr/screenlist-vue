@@ -6,13 +6,19 @@
       id="movie-search"
       type="text"
       v-model="query"
-      placeholder="Enter movie name..."
+      placeholder="Search movie titles..."
+      autocomplete="off"
       @input="handleSearch"
       class="border border-grey-100 shadow rounded-full px-3 py-2 mb-4 w-full"
     />
 
     <div class="movies flex gap-2" v-if="movies.length">
-      <div v-for="movie in movies" :key="movie.id" class="movie">
+      <div
+        v-for="movie in movies"
+        :key="movie.id"
+        class="movie"
+        :class="{ 'no-poster': !movie.poster_path }"
+      >
         <img
           v-if="movie.poster_path"
           :src="getPosterUrl(movie.poster_path)"
@@ -20,15 +26,22 @@
           class="rounded-xl"
         />
         <div v-else class="poster-placeholder bg-gray-950 rounded-xl"></div>
-        <h3>{{ movie.title }}</h3>
-        <p>
-          {{ movie.release_date ? movie.release_date.split("-")[0] : "N/A" }}
-        </p>
+        <div class="movie-info bg-gray-950/90 px-3 py-4 rounded-t-xl">
+          <h3 class="font-bold leading-tight mb-2 text-lg">
+            {{ trimmedTitle(movie.title) }}
+          </h3>
+          <p class="text-xs">
+            {{ movie.release_date ? movie.release_date.split("-")[0] : "N/A" }}
+          </p>
+        </div>
+        <div class="movie-controls"></div>
       </div>
     </div>
 
     <div v-else>
-      <p>No movies found. Try searching for something else!</p>
+      <p v-if="query" class="text-center">
+        No results found. Try searching for another title.
+      </p>
     </div>
   </div>
 </template>
@@ -67,13 +80,18 @@ export default {
     getPosterUrl(path) {
       return `https://image.tmdb.org/t/p/w500${path}`;
     },
+    trimmedTitle(title) {
+      const maxLength = 30; // Set your maximum length here
+      return title.length > maxLength
+        ? title.substring(0, maxLength) + "..."
+        : title;
+    },
   },
 };
 </script>
 
 <style scoped>
 .search {
-  text-align: center;
   padding: 20px 0px;
 }
 
@@ -88,9 +106,10 @@ export default {
 }
 
 .movie {
+  position: relative;
   width: 150px;
   margin: 10px;
-  text-align: center;
+  color: white;
 }
 
 .movie img {
@@ -102,13 +121,22 @@ export default {
   height: 220px;
 }
 
-.movie h3 {
-  font-size: 16px;
-  margin: 10px 0 5px;
+.movie:hover .movie-info {
+  opacity: 1;
 }
 
-.movie p {
-  font-size: 14px;
-  color: #666;
+.movie-info {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+}
+
+.no-poster * {
+  opacity: 1 !important;
+}
+
+.movie-controls {
 }
 </style>
