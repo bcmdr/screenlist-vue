@@ -5,21 +5,16 @@
       <div class="logo">
         <a href="/">ScreenList</a>
       </div>
-      <div class="user-menu min-h-3">
-        <transition name="fade">
-        <div class="text-md fade-in" v-if="!user && !loading" @click="signInWithGoogle">
+      <div class="user-menu min-h-3" v-if="!loading">
+        <button class="text-md cursor-pointer" v-if="!user" @click="signInWithGoogle">
           Sign In
-        </div>
-      </transition>
-
-      <transition name="fade">
-        <div v-if="!loading && user" class="user-dropdown">
-          <span class="text-md fade-in" @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
+        </button>
+        <div v-if="user" class="user-dropdown">
+          <span class="text-md cursor-pointer" @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
           <div v-if="menuOpen" class="dropdown-menu">
-            <button @click="signOut">Logout</button>
+            <button class="cursor-pointer" @click="signOut">Logout</button>
           </div>
         </div>
-      </transition>
       </div>
     </div class="container">
   </nav>
@@ -102,10 +97,7 @@ export default {
 
 .user-menu {
   position: relative;
-}
 
-.user-dropdown {
-  cursor: pointer;
 }
 
 .dropdown-menu {
@@ -116,12 +108,5 @@ export default {
   color: black;
   padding: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 150ms ease-in;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
 }
 </style>
