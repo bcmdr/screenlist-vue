@@ -25,7 +25,7 @@
           :alt="movie.title"
           class="rounded-xl"
         />
-        <div v-else class="poster-placeholder bg-gray-950 rounded-xl"></div>
+        <div v-else class="poster-placeholder bg-gray-700 rounded-xl"></div>
         <div class="movie-info bg-gray-950/90 px-3 py-4 rounded-t-xl">
           <h3 class="font-bold leading-tight mb-2 text-lg">
             {{ trimmedTitle(movie.title) }}
@@ -162,5 +162,6 @@ export default {
 
 .no-poster * {
   visibility: visible;
+  @apply bg-gray-700;
 }
 </style>
