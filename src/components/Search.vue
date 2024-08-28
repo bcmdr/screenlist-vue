@@ -149,21 +149,18 @@ export default {
 }
 
 .movie:hover .movie-info {
-  opacity: 1;
+  visibility: visible;
 }
 
 .movie-info {
+  visibility: hidden;
   position: absolute !important;
   top: 0;
   left: 0;
   right: 0;
-  opacity: 0;
 }
 
 .no-poster * {
-  opacity: 1 !important;
-}
-
-.movie-controls {
+  visibility: visible;
 }
 </style>
