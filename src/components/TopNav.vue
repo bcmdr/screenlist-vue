@@ -1,12 +1,12 @@
 <!-- src/components/TopNav.vue -->
 <template>
-  <nav class="top-nav">
-    <div class="container">
+  <nav class="top-nav px-2 py-2 bg-gray-950">
+    <div class="clamp flex justify-between items-center">
       <div class="logo">
         <a href="/">ScreenList</a>
       </div>
       <div class="user-menu">
-        <button v-if="!user" @click="signInWithGoogle">
+        <button class="px-2 py-1 text-sm" v-if="!user" @click="signInWithGoogle">
           Sign In with Google
         </button>
         <div v-else class="user-dropdown">
@@ -77,8 +77,6 @@ export default {
 
 <style scoped>
 .top-nav {
-  padding: 0.5rem 1.5rem;
-  background-color: #333;
   color: white;
   margin: auto;
 }
