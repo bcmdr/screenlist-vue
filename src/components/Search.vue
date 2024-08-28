@@ -12,7 +12,7 @@
       class="border border-grey-100 shadow rounded-full px-3 py-2 mb-4 w-full"
     />
 
-    <div class="movies flex gap-2" v-if="movies.length">
+    <div class="movies grid gap-4" v-if="movies.length">
       <div
         v-for="movie in movies"
         :key="movie.id"
@@ -100,25 +100,24 @@ export default {
 }
 
 .movies {
-  display: flex;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   flex-wrap: wrap;
-  justify-content: center;
+  justify-items: center;
 }
 
 .movie {
   position: relative;
-  width: 150px;
-  margin: 10px;
+  width: 100%;
   color: white;
 }
 
 .movie img {
-  width: 100%;
-  height: 220px;
+  width: auto;
+  height: 100%;
 }
 
 .poster-placeholder {
-  height: 220px;
+  height: 100%;
 }
 
 .movie:hover .movie-info {

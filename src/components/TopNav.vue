@@ -1,13 +1,13 @@
 <!-- src/components/TopNav.vue -->
 <template>
   <nav class="top-nav px-2 py-2 bg-gray-950">
-    <div class="clamp flex justify-between items-center">
+    <div class="clamp flex justify-between items-center gap-2">
       <div class="logo">
         <a href="/">ScreenList</a>
       </div>
       <div class="user-menu">
         <button class="px-2 py-1 text-sm" v-if="!user" @click="signInWithGoogle">
-          Sign In with Google
+          Sign In
         </button>
         <div v-else class="user-dropdown">
           <span @click="toggleMenu">{{ user.displayName }}</span>
