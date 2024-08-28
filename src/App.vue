@@ -27,7 +27,7 @@ body {
   @apply bg-gray-50;
 }
 .page {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
