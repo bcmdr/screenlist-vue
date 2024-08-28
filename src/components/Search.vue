@@ -112,12 +112,12 @@ export default {
 }
 
 .movie img {
-  width: auto;
-  height: 100%;
+  width: 100%;
+  height: auto;
 }
 
 .poster-placeholder {
-  height: 100%;
+  height: auto;
 }
 
 .movie:hover .movie-info {
