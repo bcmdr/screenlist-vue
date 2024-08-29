@@ -1,8 +1,8 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from "vue-router";
-import Search from "../components/Search.vue";
+import Home from "../components/Home.vue";
 
-const routes = [{ path: "/", component: Search }];
+const routes = [{ path: "/", component: Home }];
 
 const router = createRouter({
   history: createWebHistory(),

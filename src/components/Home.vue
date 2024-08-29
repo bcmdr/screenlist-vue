@@ -1,6 +1,5 @@
-<!-- src/components/Search.vue -->
 <template>
-  <div class="search">
+  <div class="home">
     <label class="hidden" for="movie-search">Search for Movies</label>
     <input
       id="movie-search"
@@ -153,7 +152,7 @@ export default {
 </script>
 
 <style scoped>
-.search {
+.home {
   padding: 20px 0px;
 }
 
