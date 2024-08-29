@@ -2,7 +2,7 @@
 <template>
   <div class="page">
     <TopNav class="page-top" />
-    <main class="clamp page-body">
+    <main class="page-body">
       <router-view />
     </main>
     <Footer class="page-bottom" />

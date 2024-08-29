@@ -6,11 +6,11 @@
         <a href="/">ScreenList</a>
       </div>
       <div class="user-menu min-h-3" v-if="!loading">
-        <button class="text-md cursor-pointer" v-if="!user" @click="signInWithGoogle">
+        <button class="text-sm cursor-pointer" v-if="!user" @click="signInWithGoogle">
           Sign In
         </button>
         <div v-if="user" class="user-dropdown">
-          <span class="text-md cursor-pointer" @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
+          <span class="text-sm cursor-pointer" @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
           <div v-if="menuOpen" class="dropdown-menu">
             <button class="cursor-pointer" @click="signOut">Logout</button>
           </div>
