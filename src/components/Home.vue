@@ -2,16 +2,17 @@
   <div class="home">
     <nav class="lists bg-white shadow py-2 text-sm">
       <div class="clamp flex justify-between">
-        <div>
+        <div class="flex">
           <button
-            v-for="[key, list] in Object.entries(lists)"
+            v-for="[key, list] in Object.entries(defaultLists)"
             :key="key"
             @click="() => handleListSelect(key)"
             :class="{ selected: selectedList === key }"
-            class="py-2 px-3 rounded cursor-pointer"
+            class=""
           >
             {{ list.title }}
           </button>
+          <button>More</button>
         </div>
         <div>
           <button
@@ -228,9 +229,12 @@ export default {
     handleCancelMore() {
       this.showLists = false;
     },
-    handleListSelect(listId) {
+    handleListSelect(listKey) {
+      let lists =
+        listKey == "i" || listKey == "l" ? this.defaultLists : this.lists;
       this.selectedList = listId;
       this.searchSelected = false;
+      this.movies = lists[listKey].movies;
     },
     handleSearchSelect() {
       this.selectedList = null;
@@ -275,6 +279,9 @@ nav .selected {
   @apply bg-gray-950 text-white;
 }
 
+nav.lists button {
+  @apply py-2 px-3 rounded cursor-pointer;
+}
 .movie-controls .selected {
   @apply bg-white text-black;
 }
@@ -303,13 +310,15 @@ nav .selected {
   height: 100%;
 }
 
-.movie:hover .movie-info,
+.movie:hover .movie-info {
+  display: block;
+}
 .movie:hover .movie-controls {
-  visibility: visible;
+  display: flex;
 }
 
 .movie-info {
-  visibility: hidden;
+  display: none;
   position: absolute !important;
   top: 0;
   left: 0;
@@ -317,7 +326,7 @@ nav .selected {
 }
 
 .movie-controls {
-  visibility: hidden;
+  display: none;
   position: absolute !important;
   bottom: 0;
   left: 0;
@@ -329,7 +338,7 @@ nav .selected {
 }
 
 .no-poster .movie-info {
-  visibility: visible;
+  display: block;
   @apply bg-gray-700;
 }
 </style>
