@@ -209,6 +209,7 @@ export default {
           this.movies = response.data.results.sort(
             (a, b) => b.popularity - a.popularity
           );
+          this.searchMovies = this.movies;
         })
         .catch((error) => {
           console.error("Error fetching movies:", error);
@@ -238,6 +239,7 @@ export default {
     },
     handleSearchSelect() {
       this.selectedList = null;
+      this.movies = this.searchMovies;
       this.searchSelected = true;
     },
     handleAddMovie(listKey, movie) {
