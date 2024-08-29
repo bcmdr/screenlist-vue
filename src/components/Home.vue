@@ -1,12 +1,12 @@
 <template>
   <div class="home">
     <nav class="lists bg-white shadow py-2 text-sm">
-      <div class="clamp flex justify-between">
+      <div class="clamp flex justify-between overflow-x-auto">
         <div class="flex">
           <button
             v-for="[key, list] in Object.entries(defaultLists)"
             :key="key"
-            @click="() => handleListSelect(key)"
+            @click="() => handleListSelect(list.id)"
             :class="{ selected: selectedList === key }"
             class=""
           >
@@ -232,7 +232,7 @@ export default {
     handleListSelect(listKey) {
       let lists =
         listKey == "i" || listKey == "l" ? this.defaultLists : this.lists;
-      this.selectedList = listId;
+      this.selectedList = listKey;
       this.searchSelected = false;
       this.movies = lists[listKey].movies;
     },
@@ -297,7 +297,7 @@ nav.lists button {
   width: 100%;
   aspect-ratio: 2 / 3;
   color: white;
-  max-width: 240px;
+  max-width: 200px;
 }
 
 .movie img {
