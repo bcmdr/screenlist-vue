@@ -34,7 +34,29 @@
             {{ movie.release_date ? movie.release_date.split("-")[0] : "N/A" }}
           </p>
         </div>
-        <div class="movie-controls"></div>
+        <div
+          v-if="!showLists"
+          class="movie-controls bg-gray-950/90 px-2 py-2 rounded-b-xl flex flex-wrap gap-1.5"
+        >
+          <button>Interested</button>
+          <button>Liked</button>
+          <button
+            @click="
+              () => {
+                handleMore();
+              }
+            "
+          >
+            More...
+          </button>
+        </div>
+        <div
+          v-else
+          class="movie-controls bg-gray-950/90 px-2 py-2 rounded-b-xl flex flex-wrap gap-1.5"
+        >
+          <button @click="handleCancelMore">&lt;</button>
+          <button v-for="list in mockLists">{{ list.title }}</button>
+        </div>
       </div>
     </div>
 
@@ -55,6 +77,8 @@ export default {
     return {
       query: "",
       movies: [],
+      adding: null,
+      showLists: false,
     };
   },
   created() {
@@ -65,6 +89,13 @@ export default {
     filteredMovies() {
       // Filter out movies without a release year
       return this.movies.filter((movie) => movie.release_date);
+    },
+    mockLists() {
+      return [
+        { id: 1, title: "Ocean" },
+        { id: 2, title: "Filmcast" },
+        { id: 3, title: "Favourites" },
+      ];
     },
   },
   methods: {
@@ -111,6 +142,12 @@ export default {
         ? title.substring(0, maxLength) + "..."
         : title;
     },
+    handleMore() {
+      this.showLists = true;
+    },
+    handleCancelMore() {
+      this.showLists = false;
+    },
   },
 };
 </script>
@@ -148,7 +185,8 @@ export default {
   height: 100%;
 }
 
-.movie:hover .movie-info {
+.movie:hover .movie-info,
+.movie:hover .movie-controls {
   visibility: visible;
 }
 
@@ -160,7 +198,19 @@ export default {
   right: 0;
 }
 
-.no-poster * {
+.movie-controls {
+  visibility: hidden;
+  position: absolute !important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.movie-controls button {
+  @apply border border-white px-2 py-1 rounded-sm text-xs flex-grow;
+}
+
+.no-poster .movie-info {
   visibility: visible;
   @apply bg-gray-700;
 }

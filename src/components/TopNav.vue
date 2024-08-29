@@ -1,7 +1,7 @@
 <!-- src/components/TopNav.vue -->
 <template>
   <nav class="top-nav bg-gray-950">
-    <div class="clamp flex justify-between items-center gap-2 px-2 py-3">
+    <div class="clamp flex justify-between items-center gap-2 px-4 py-3">
       <div class="logo">
         <a href="/">ScreenList</a>
       </div>
