@@ -4,6 +4,15 @@
       <div class="clamp flex justify-between overflow-x-auto">
         <div class="flex">
           <button
+            v-for="[key, list] in Object.entries(featuredLists)"
+            :key="key"
+            @click="() => handleListSelect(list.id)"
+            :class="{ selected: selectedList === key }"
+            class=""
+          >
+            {{ list.title }}
+          </button>
+          <button
             v-for="[key, list] in Object.entries(defaultLists)"
             :key="key"
             @click="() => handleListSelect(list.id)"
@@ -12,28 +21,20 @@
           >
             {{ list.title }}
           </button>
-          <button>More</button>
-        </div>
-        <div>
-          <button
-            @click="() => handleSearchSelect()"
-            :class="{ selected: searchSelected === true }"
-            class="py-2 px-3 rounded cursor-pointer"
-          >
-            Search
-          </button>
         </div>
       </div>
     </nav>
-    <div v-if="searchSelected" class="search clamp mt-4 mb-4">
+    <div v-if="showSearch" class="search clamp mt-4 mb-4">
       <label class="hidden" for="movie-search">Search for Movies</label>
       <input
+        ref="searchInput"
         id="movie-search"
         type="text"
         v-model="query"
         placeholder="Search movie titles..."
         autocomplete="off"
         @input="handleSearch"
+        @blur="handleBlurSearch"
         class="border border-grey-100 shadow rounded-full px-3 py-2 w-full"
       />
     </div>
@@ -51,7 +52,7 @@
           :alt="movie.title"
           class="rounded-xl"
         />
-        <div v-else class="poster-placeholder bg-gray-700 rounded-xl"></div>
+        <div v-else class="poster-placeholder bg-gray-300 rounded-xl"></div>
         <div class="movie-info bg-gray-950/90 px-3 py-4 rounded-t-xl">
           <h3 class="font-bold leading-tight mb-2 text-lg">
             {{ trimmedTitle(movie.title) }}
@@ -109,6 +110,13 @@
           </button>
         </div>
       </div>
+      <div
+        v-if="selectedList === 'f' && movies.length"
+        class="movie load-more flex items-center justify-center cursor-pointer bg-gray-300 rounded-xl"
+        @click="loadMoreFeatured"
+      >
+        <span class="text-black font-bold text-center">Load More</span>
+      </div>
     </div>
 
     <div v-else>
@@ -122,16 +130,31 @@
 <script>
 import tmdb from "../tmdb"; // Import the TMDB API configuration
 import debounce from "lodash.debounce";
+import emitter from "../eventBus";
 
 export default {
+  emits: ["unfocus-search"],
+  props: {
+    showSearch: Boolean,
+  },
   data() {
     return {
       query: "",
       movies: [],
       adding: null,
       showLists: false,
-      selectedList: null,
-      searchSelected: true,
+      selectedList: "f",
+      page: 1,
+      loadingMore: false,
+      totalPages: null,
+      featuredLists: {
+        f: {
+          id: "f",
+          title: "Featured",
+          movies: [],
+          movieIds: [],
+        },
+      },
       defaultLists: {
         i: {
           id: "i",
@@ -149,7 +172,7 @@ export default {
       lists: {
         1: {
           id: 1,
-          title: "Ocean",
+          title: "Friends",
           movies: [],
           movieIds: [],
         },
@@ -168,6 +191,24 @@ export default {
       },
     };
   },
+  watch: {
+    showSearch(val) {
+      if (val) {
+        this.handleSearchSelect();
+      }
+    },
+  },
+  mounted() {
+    emitter.on("focus-search", this.focusSearchField);
+    window.addEventListener("scroll", this.handleScroll);
+    if (this.selectedList === "f") {
+      this.fetchFeaturedMovies();
+    }
+  },
+  beforeUnmount() {
+    emitter.off("focus-search", this.focusSearchField);
+    window.removeEventListener("scroll", this.handleScroll);
+  },
   created() {
     // Create a debounced version of the search function
     this.debouncedSearch = debounce(this.executeSearch, 300); // 1-second debounce delay
@@ -175,11 +216,28 @@ export default {
   },
   computed: {
     filteredMovies() {
-      // Filter out movies without a release year
-      return this.movies.filter((movie) => movie.release_date);
+      return (this.movies || []).filter((movie) => this.isAcceptable(movie));
     },
   },
   methods: {
+    isAcceptable(movie) {
+      return !movie.adult && movie?.release_dates?.certification !== null;
+    },
+    handleScroll() {
+      const scrollThreshold = 300;
+      const nearBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - scrollThreshold;
+      if (
+        nearBottom &&
+        this.selectedList === "f" &&
+        !this.loadingMore &&
+        (!this.totalPages || this.page < this.totalPages)
+      ) {
+        this.page++;
+        this.fetchFeaturedMovies();
+      }
+    },
     handleSearch() {
       if (this.query.length < 1) {
         return;
@@ -190,6 +248,10 @@ export default {
         // Debounce the search function for longer queries
         this.debouncedSearch();
       }
+    },
+    handleBlurSearch() {
+      console.log("emitting");
+      emitter.emit("unfocus-search");
     },
     executeSearch() {
       if (this.query.trim() === "") {
@@ -203,16 +265,45 @@ export default {
           params: {
             query: this.query,
             include_adult: false, // Exclude adult content
+            region: "US",
           },
         })
         .then((response) => {
-          this.movies = response.data.results.sort(
-            (a, b) => b.popularity - a.popularity
+          const filtered = response.data.results.filter(
+            (movie) => !movie.adult
           );
+          this.movies = filtered.sort((a, b) => b.popularity - a.popularity);
           this.searchMovies = this.movies;
         })
         .catch((error) => {
           console.error("Error fetching movies:", error);
+        });
+    },
+    fetchFeaturedMovies() {
+      if (this.loadingMore) return;
+      this.loadingMore = true;
+      tmdb
+        .get("/movie/popular", { params: { page: this.page } })
+        .then((response) => {
+          // Capture total pages from the API response
+          this.totalPages = response.data.total_pages;
+          // Filter out adult movies
+          const results = response.data.results.filter((movie) => !movie.adult);
+          if (this.page === 1) {
+            this.featuredLists.f.movies = results;
+          } else {
+            this.featuredLists.f.movies.push(...results);
+          }
+          this.featuredLists.f.movieIds = this.featuredLists.f.movies.map(
+            (m) => m.id
+          );
+          this.movies = this.featuredLists.f.movies;
+        })
+        .catch((error) => {
+          console.error("Error fetching featured movies:", error);
+        })
+        .finally(() => {
+          this.loadingMore = false;
         });
     },
     getPosterUrl(path) {
@@ -234,13 +325,14 @@ export default {
       let lists =
         listKey == "i" || listKey == "l" ? this.defaultLists : this.lists;
       this.selectedList = listKey;
-      this.searchSelected = false;
-      this.movies = lists[listKey].movies;
+      if (listKey === "f") {
+        this.fetchFeaturedMovies();
+      } else {
+        this.movies = lists[listKey].movies;
+      }
     },
     handleSearchSelect() {
-      this.selectedList = null;
       this.movies = this.searchMovies;
-      this.searchSelected = true;
     },
     handleAddMovie(listKey, movie) {
       let lists =
@@ -267,6 +359,20 @@ export default {
       lists[listKey].movieIds = lists[listKey].movieIds.filter(
         (existingMovieId) => existingMovieId !== movie.id
       );
+    },
+    focusSearchField() {
+      this.$nextTick(() => {
+        this.$refs.searchInput?.focus();
+      });
+    },
+    loadMoreFeatured() {
+      if (
+        this.selectedList === "f" &&
+        (!this.totalPages || this.page < this.totalPages)
+      ) {
+        this.page++;
+        this.fetchFeaturedMovies();
+      }
     },
   },
 };
@@ -341,6 +447,6 @@ nav.lists button {
 
 .no-poster .movie-info {
   display: block;
-  @apply bg-gray-700;
+  @apply bg-gray-500;
 }
 </style>

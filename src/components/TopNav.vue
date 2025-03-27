@@ -1,36 +1,79 @@
-<!-- src/components/TopNav.vue -->
 <template>
   <nav class="top-nav bg-gray-950">
     <div class="clamp flex justify-between items-center gap-2 px-4 py-3">
       <div class="logo">
         <a href="/">ScreenList</a>
       </div>
-      <div class="user-menu min-h-3" v-if="!loading">
-        <button class="text-sm cursor-pointer" v-if="!user" @click="signInWithGoogle">
+      <div class="action-menu min-h-3 flex gap-2">
+        <button
+          @click="handleSearchClick"
+          :class="[
+            'text-sm rounded px-3 py-1 border',
+            focusSearch
+              ? 'bg-white text-black border-white'
+              : 'text-white border-white bg-transparent',
+          ]"
+        >
+          Search
+        </button>
+        <button
+          class="text-sm cursor-pointer"
+          v-if="!user && !loading"
+          @click="signInWithGoogle"
+        >
           Sign In
         </button>
-        <div v-if="user" class="user-dropdown">
-          <span class="text-sm cursor-pointer" @click="toggleMenu">{{ user.displayName.split(" ")[0] }}</span>
-          <div v-if="menuOpen" class="dropdown-menu">
+        <div
+          v-if="user && !loading"
+          class="user-dropdown flex items-center gap-2"
+        >
+          <div @click="toggleMenu" class="cursor-pointer">
+            <img
+              v-if="user?.photoURL"
+              :src="user.photoURL"
+              alt="Profile"
+              class="w-8 h-8 rounded-full object-cover"
+            />
+            <div
+              v-else
+              class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold"
+            >
+              {{ user?.displayName?.[0] || "U" }}
+            </div>
+          </div>
+          <div v-if="menuOpen" class="dropdown-menu rounded">
             <button class="cursor-pointer" @click="signOut">Logout</button>
           </div>
         </div>
       </div>
-    </div class="container">
+    </div>
   </nav>
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, toRefs } from "vue";
 import { auth } from "../firebase";
 import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut as firebaseSignOut,
 } from "firebase/auth";
+import emitter from "../eventBus";
 
 export default {
-  setup() {
+  emits: ["toggle-search", "focus-search"],
+  props: {
+    focusSearch: {
+      type: Boolean,
+      default: false,
+    },
+    showSearch: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  setup(props, { emit }) {
+    const { showSearch } = toRefs(props);
     const user = ref(null);
     const menuOpen = ref(false);
     const loading = ref(true);
@@ -54,6 +97,7 @@ export default {
 
     const toggleMenu = () => {
       menuOpen.value = !menuOpen.value;
+      console.log(user);
     };
 
     const signOut = async () => {
@@ -66,6 +110,11 @@ export default {
       }
     };
 
+    const handleSearchClick = () => {
+      emit("toggle-search");
+      emit("focus-search");
+    };
+
     return {
       user,
       menuOpen,
@@ -73,6 +122,8 @@ export default {
       toggleMenu,
       signOut,
       loading,
+      handleSearchClick,
+      showSearch,
     };
   },
 };
@@ -84,8 +135,8 @@ export default {
 }
 
 .container {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .logo a {
@@ -95,9 +146,8 @@ export default {
   font-weight: bold;
 }
 
-.user-menu {
+.action-menu {
   position: relative;
-
 }
 
 .dropdown-menu {
