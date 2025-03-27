@@ -35,6 +35,7 @@
         autocomplete="off"
         @input="handleSearch"
         @blur="handleBlurSearch"
+        @focus="handleFocusSearch"
         class="border border-grey-100 shadow rounded-full px-3 py-2 w-full"
       />
     </div>
@@ -133,7 +134,7 @@ import debounce from "lodash.debounce";
 import emitter from "../eventBus";
 
 export default {
-  emits: ["unfocus-search"],
+  emits: ["unfocus-search", "focus-search"],
   props: {
     showSearch: Boolean,
   },
@@ -239,6 +240,7 @@ export default {
       }
     },
     handleSearch() {
+      this.selectedList = null;
       if (this.query.length < 1) {
         return;
       } else if (this.query.length === 1) {
@@ -250,8 +252,10 @@ export default {
       }
     },
     handleBlurSearch() {
-      console.log("emitting");
       emitter.emit("unfocus-search");
+    },
+    handleFocusSearch() {
+      emitter.emit("focus-search");
     },
     executeSearch() {
       if (this.query.trim() === "") {
@@ -328,7 +332,7 @@ export default {
       if (listKey === "f") {
         this.fetchFeaturedMovies();
       } else {
-        this.movies = lists[listKey].movies;
+        this.movies = lists[listKey]?.movies;
       }
     },
     handleSearchSelect() {
