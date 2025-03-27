@@ -10,4 +10,5 @@
   -moz-osx-font-smoothing: grayscale;
 
   --max-width: 960px;
+  @apply bg-gray-950;
 }
