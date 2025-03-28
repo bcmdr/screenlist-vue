@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <nav class="lists bg-white shadow py-2 text-sm">
+    <nav class="lists bg-white shadow py-2 px-4 text-sm">
       <div class="clamp flex justify-between overflow-x-auto">
         <div class="flex">
           <button
@@ -24,7 +24,7 @@
         </div>
       </div>
     </nav>
-    <div v-if="showSearch" class="search clamp mt-4 mb-4">
+    <div v-if="showSearch" class="search clamp mt-4 mb-4 px-4">
       <label class="hidden" for="movie-search">Search for Movies</label>
       <input
         ref="searchInput"
@@ -40,12 +40,47 @@
       />
     </div>
 
-    <div class="movies clamp grid gap-4 my-4" v-if="filteredMovies.length">
+    <div
+      v-if="preview"
+      class="movie-preview sticky top-0 bg-black text-white z-40 shadow-md border-b border-gray-800"
+    >
+      <div class="clamp max-h-[100vh] overflow-y-auto p-10">
+        <button
+          class="text-sm underline mb-4 float-right"
+          @click="preview = null"
+        >
+          Hide
+        </button>
+        <h2 class="text-2xl font-bold mb-1">{{ preview.title }}</h2>
+        <p class="text-sm text-gray-300 mb-4">
+          {{
+            preview.release_date ? preview.release_date.split("-")[0] : "N/A"
+          }}
+        </p>
+        <p class="mb-4">
+          {{ preview.overview || "No description available." }}
+        </p>
+        <div class="text-sm space-y-2">
+          <p><strong>Director:</strong> {{ previewDirector }}</p>
+          <p><strong>Cast:</strong> {{ previewCast.join(", ") }}</p>
+          <p>
+            <strong>Streaming in Canada:</strong>
+            <span v-if="previewWatchProviders.length">
+              {{ previewWatchProviders.join(", ") }}
+            </span>
+            <span v-else> Not available </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="movies clamp grid gap-4 my-4 px-4" v-if="filteredMovies.length">
       <div
         v-for="movie in filteredMovies"
         :key="movie.id"
         class="movie"
         :class="{ 'no-poster': !movie.poster_path }"
+        @click="handlePosterClick($event, movie)"
       >
         <img
           v-if="movie.poster_path"
@@ -142,6 +177,7 @@ export default {
     return {
       query: "",
       movies: [],
+      preview: null,
       adding: null,
       showLists: false,
       selectedList: "f",
@@ -190,6 +226,9 @@ export default {
           movieIds: [],
         },
       },
+      previewCast: [],
+      previewDirector: "",
+      previewWatchProviders: [],
     };
   },
   watch: {
@@ -269,7 +308,7 @@ export default {
           params: {
             query: this.query,
             include_adult: false, // Exclude adult content
-            region: "US",
+            region: "CA",
           },
         })
         .then((response) => {
@@ -363,6 +402,32 @@ export default {
       lists[listKey].movieIds = lists[listKey].movieIds.filter(
         (existingMovieId) => existingMovieId !== movie.id
       );
+    },
+    handlePosterClick(event, movie) {
+      if (event.target.tagName.toLowerCase() !== "button") {
+        this.preview = movie;
+        this.fetchPreviewDetails(movie);
+      }
+    },
+    fetchPreviewDetails(movie) {
+      const id = movie.id;
+      this.previewCast = [];
+      this.previewDirector = "";
+      this.previewWatchProviders = [];
+
+      tmdb.get(`/movie/${id}/credits`).then((res) => {
+        const cast = res.data.cast.map((m) => m.name).slice(0, 5);
+        const director = res.data.crew.find((c) => c.job === "Director");
+        this.previewCast = cast;
+        this.previewDirector = director?.name || "Unknown";
+      });
+
+      tmdb.get(`/movie/${id}/watch/providers`).then((res) => {
+        const ca = res.data.results?.CA;
+        if (ca && ca.flatrate) {
+          this.previewWatchProviders = ca.flatrate.map((p) => p.provider_name);
+        }
+      });
     },
     focusSearchField() {
       this.$nextTick(() => {
