@@ -36,7 +36,7 @@
 
     <div
       v-if="preview"
-      class="movie-preview sticky top-0 z-40 shadow-md border-b border-gray-800"
+      class="movie-preview sticky top-0 z-40 shadow-md border-b border-gray-800 bg-gray-950"
       :style="{
         backgroundImage: preview.backdrop_path
           ? `linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.4) 100%), url(https://image.tmdb.org/t/p/w1280${preview.backdrop_path})`

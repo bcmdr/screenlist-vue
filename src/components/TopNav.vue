@@ -5,7 +5,7 @@
         <a href="/">ScreenList</a>
       </div>
       <div class="action-menu min-h-3 flex gap-2">
-        <button
+        <!-- <button
           class="text-sm cursor-pointer"
           v-if="!user && !loading"
           @click="signInWithGoogle"
@@ -33,7 +33,7 @@
               {{ user?.displayName?.[0] || "U" }}
             </div>
           </div>
-        </div>
+        </div> -->
         <button
           @click="handleSearchClick"
           :class="[
