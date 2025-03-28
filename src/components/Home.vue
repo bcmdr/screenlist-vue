@@ -4,20 +4,14 @@
       <div class="clamp flex justify-between overflow-x-auto">
         <div class="flex">
           <button
-            v-for="[key, list] in Object.entries(featuredLists)"
+            v-for="[key, list] in [
+              ...Object.entries(featuredLists),
+              ...Object.entries(defaultLists),
+              ...Object.entries(lists),
+            ]"
             :key="key"
             @click="() => handleListSelect(list.id)"
-            :class="{ selected: selectedList === key }"
-            class=""
-          >
-            {{ list.title }}
-          </button>
-          <button
-            v-for="[key, list] in Object.entries(defaultLists)"
-            :key="key"
-            @click="() => handleListSelect(list.id)"
-            :class="{ selected: selectedList === key }"
-            class=""
+            :class="{ selected: selectedList === list.id }"
           >
             {{ list.title }}
           </button>
@@ -42,7 +36,16 @@
 
     <div
       v-if="preview"
-      class="movie-preview sticky top-0 bg-black text-white z-40 shadow-md border-b border-gray-800"
+      class="movie-preview sticky top-0 z-40 shadow-md border-b border-gray-800"
+      :style="{
+        backgroundImage: preview.backdrop_path
+          ? `linear-gradient(to right, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%), url(https://image.tmdb.org/t/p/w1280${preview.backdrop_path})`
+          : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: 'white',
+      }"
     >
       <div class="clamp max-h-[100vh] overflow-y-auto p-10">
         <button
@@ -52,9 +55,12 @@
           Hide
         </button>
         <h2 class="text-2xl font-bold mb-1">{{ preview.title }}</h2>
+        <p class="text-sm text-yellow-300 mb-2">
+          {{ getReleaseContext(preview.release_date, previewWatchProviders) }}
+        </p>
         <p class="text-sm text-gray-300 mb-4">
           {{
-            preview.release_date ? preview.release_date.split("-")[0] : "N/A"
+            preview.release_date ? formatFullDate(preview.release_date) : "N/A"
           }}
         </p>
         <p class="mb-4">
@@ -65,11 +71,51 @@
           <p><strong>Cast:</strong> {{ previewCast.join(", ") }}</p>
           <p>
             <strong>Streaming in Canada:</strong>
-            <span v-if="previewWatchProviders.length">
-              {{ previewWatchProviders.join(", ") }}
+            <span
+              v-if="previewWatchProviders.length"
+              class="flex flex-wrap gap-2 mt-1"
+            >
+              <a
+                v-for="provider in previewWatchProviders"
+                :key="provider.provider_id"
+                :href="`https://www.themoviedb.org/movie/${preview.id}/watch`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-block"
+              >
+                <img
+                  :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                  :alt="provider.provider_name"
+                  class="h-6 w-auto"
+                />
+              </a>
             </span>
             <span v-else> Not available </span>
           </p>
+          <p><strong>Save to list:</strong></p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="[key, list] in [
+                ...Object.entries(defaultLists),
+                ...Object.entries(lists),
+              ]"
+              :key="key"
+              @click="
+                !list.movieIds.includes(preview.id)
+                  ? handleAddMovie(list.id, preview)
+                  : handleRemoveMovie(list.id, preview)
+              "
+              :class="{
+                'bg-white text-black': list.movieIds.includes(preview.id),
+                'border border-white text-white': !list.movieIds.includes(
+                  preview.id
+                ),
+              }"
+              class="px-3 py-1 rounded text-xs"
+            >
+              {{ list.title }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -98,11 +144,11 @@
           </p>
         </div>
         <div
-          v-if="!showLists"
           class="movie-controls bg-gray-950/90 px-2 py-2 rounded-b-xl flex flex-wrap gap-1.5"
         >
+          <button v-if="showLists" @click="handleCancelMore">&lt;</button>
           <button
-            v-for="list in defaultLists"
+            v-for="list in showLists ? lists : defaultLists"
             :key="list.id"
             @click="
               () => {
@@ -116,6 +162,7 @@
             {{ list.title }}
           </button>
           <button
+            v-if="!showLists"
             @click="
               () => {
                 handleMore();
@@ -123,26 +170,6 @@
             "
           >
             More...
-          </button>
-        </div>
-        <div
-          v-else
-          class="movie-controls bg-gray-950/90 px-2 py-2 rounded-b-xl flex flex-wrap gap-1.5"
-        >
-          <button @click="handleCancelMore">&lt;</button>
-          <button
-            v-for="list in lists"
-            :key="list.id"
-            @click="
-              () => {
-                !list.movieIds.includes(movie.id)
-                  ? handleAddMovie(list.id, movie)
-                  : handleRemoveMovie(list.id, movie);
-              }
-            "
-            :class="{ selected: list.movieIds.includes(movie.id) }"
-          >
-            {{ list.title }}
           </button>
         </div>
       </div>
@@ -215,7 +242,7 @@ export default {
         },
         2: {
           id: 2,
-          title: "Filmcast",
+          title: "Podcast",
           movies: [],
           movieIds: [],
         },
@@ -365,14 +392,17 @@ export default {
       this.showLists = false;
     },
     handleListSelect(listKey) {
-      let lists =
-        listKey == "i" || listKey == "l" ? this.defaultLists : this.lists;
-      this.selectedList = listKey;
       if (listKey === "f") {
+        this.selectedList = listKey;
         this.fetchFeaturedMovies();
-      } else {
-        this.movies = lists[listKey]?.movies;
+        return;
       }
+
+      const isDefault = listKey === "i" || listKey === "l";
+      const sourceLists = isDefault ? this.defaultLists : this.lists;
+
+      this.selectedList = listKey;
+      this.movies = sourceLists[listKey]?.movies || [];
     },
     handleSearchSelect() {
       this.movies = this.searchMovies;
@@ -405,6 +435,7 @@ export default {
     },
     handlePosterClick(event, movie) {
       if (event.target.tagName.toLowerCase() !== "button") {
+        if (this.preview?.id === movie.id) return;
         this.preview = movie;
         this.fetchPreviewDetails(movie);
       }
@@ -425,7 +456,7 @@ export default {
       tmdb.get(`/movie/${id}/watch/providers`).then((res) => {
         const ca = res.data.results?.CA;
         if (ca && ca.flatrate) {
-          this.previewWatchProviders = ca.flatrate.map((p) => p.provider_name);
+          this.previewWatchProviders = ca.flatrate;
         }
       });
     },
@@ -443,6 +474,41 @@ export default {
         this.fetchFeaturedMovies();
       }
     },
+    getReleaseStatus(dateStr) {
+      const today = new Date();
+      const releaseDate = new Date(dateStr);
+      const diffDays = (releaseDate - today) / (1000 * 60 * 60 * 24);
+
+      if (diffDays < -30) {
+        return `Released on ${releaseDate.toDateString()}`;
+      } else if (diffDays < 0) {
+        return "Now Playing";
+      } else {
+        return `Releases on ${releaseDate.toDateString()}`;
+      }
+    },
+    formatFullDate(dateStr) {
+      const date = new Date(dateStr);
+      return `${date.getFullYear()}, ${date.toLocaleDateString(undefined, {
+        month: "long",
+        day: "2-digit",
+      })}`;
+    },
+    getReleaseContext(dateStr, providers) {
+      const today = new Date();
+      const releaseDate = new Date(dateStr);
+      const diffDays = (releaseDate - today) / (1000 * 60 * 60 * 24);
+
+      if (diffDays > 0) {
+        return "Coming Soon";
+      } else if (providers.length > 0) {
+        return "Streaming";
+      } else if (diffDays < 0 && diffDays > -45) {
+        return "Now in Theatres";
+      } else {
+        return "";
+      }
+    },
   },
 };
 </script>
@@ -457,7 +523,10 @@ nav .selected {
 }
 
 nav.lists button {
-  @apply py-2 px-3 rounded cursor-pointer;
+  @apply py-2 px-3 rounded cursor-pointer bg-white text-black;
+}
+nav.lists button.selected {
+  @apply bg-gray-950 text-white;
 }
 .movie-controls .selected {
   @apply bg-white text-black;
@@ -476,6 +545,7 @@ nav.lists button {
   color: white;
   max-width: 200px;
   z-index: 1;
+  height: 100%;
 }
 
 .movie img {
