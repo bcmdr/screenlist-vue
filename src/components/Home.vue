@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <nav class="lists bg-white shadow py-2 px-4 text-sm">
+    <nav class="lists bg-white shadow py-2 px-4 text-sm sticky top-0 z-20">
       <div class="clamp flex px-4 justify-between overflow-x-auto">
         <div class="flex">
           <button
@@ -372,13 +372,14 @@ export default {
       if (listKey === "f") {
         this.selectedList = listKey;
         this.fetchFeaturedMovies();
-        return;
+      } else {
+        const sourceLists = this.defaultLists;
+        this.selectedList = listKey;
+        this.movies = sourceLists[listKey]?.movies || [];
       }
 
-      const sourceLists = this.defaultLists;
-
-      this.selectedList = listKey;
-      this.movies = sourceLists[listKey]?.movies || [];
+      // Scroll to top after loading
+      window.scrollTo({ top: 0, behavior: "smooth" });
     },
     handleSearchSelect() {
       this.movies = this.searchMovies;
