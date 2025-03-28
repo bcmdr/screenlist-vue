@@ -6,6 +6,35 @@
       </div>
       <div class="action-menu min-h-3 flex gap-2">
         <button
+          class="text-sm cursor-pointer"
+          v-if="!user && !loading"
+          @click="signInWithGoogle"
+        >
+          Sign In
+        </button>
+        <div v-if="menuOpen" class="dropdown-menu rounded">
+          <button class="cursor-pointer" @click="signOut">Logout</button>
+        </div>
+        <div
+          v-if="user && !loading"
+          class="user-dropdown flex items-center gap-2"
+        >
+          <div @click="toggleMenu" class="cursor-pointer">
+            <img
+              v-if="user?.photoURL"
+              :src="user.photoURL"
+              alt="Profile"
+              class="w-8 h-8 rounded-md object-cover"
+            />
+            <div
+              v-else
+              class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold"
+            >
+              {{ user?.displayName?.[0] || "U" }}
+            </div>
+          </div>
+        </div>
+        <button
           @click="handleSearchClick"
           :class="[
             'text-sm rounded px-3 py-1 border',
@@ -16,35 +45,6 @@
         >
           Search
         </button>
-        <button
-          class="text-sm cursor-pointer"
-          v-if="!user && !loading"
-          @click="signInWithGoogle"
-        >
-          Sign In
-        </button>
-        <div
-          v-if="user && !loading"
-          class="user-dropdown flex items-center gap-2"
-        >
-          <div @click="toggleMenu" class="cursor-pointer">
-            <img
-              v-if="user?.photoURL"
-              :src="user.photoURL"
-              alt="Profile"
-              class="w-8 h-8 rounded-full object-cover"
-            />
-            <div
-              v-else
-              class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold"
-            >
-              {{ user?.displayName?.[0] || "U" }}
-            </div>
-          </div>
-          <div v-if="menuOpen" class="dropdown-menu rounded">
-            <button class="cursor-pointer" @click="signOut">Logout</button>
-          </div>
-        </div>
       </div>
     </div>
   </nav>
@@ -152,8 +152,8 @@ export default {
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
-  right: 0;
+  top: 35px;
+  right: 80px;
   background-color: white;
   color: black;
   padding: 10px;

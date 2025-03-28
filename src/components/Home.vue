@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <nav class="lists bg-white shadow py-2 px-4 text-sm">
-      <div class="clamp flex justify-between overflow-x-auto">
+      <div class="clamp flex px-4 justify-between overflow-x-auto">
         <div class="flex">
           <button
             v-for="[key, list] in [
@@ -39,7 +39,7 @@
       class="movie-preview sticky top-0 z-40 shadow-md border-b border-gray-800"
       :style="{
         backgroundImage: preview.backdrop_path
-          ? `linear-gradient(to right, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%), url(https://image.tmdb.org/t/p/w1280${preview.backdrop_path})`
+          ? `linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.4) 100%), url(https://image.tmdb.org/t/p/w1280${preview.backdrop_path})`
           : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -49,10 +49,10 @@
     >
       <div class="clamp max-h-[100vh] overflow-y-auto p-10">
         <button
-          class="text-sm underline mb-4 float-right"
+          class="text-sm text-white border border-white px-2 py-1 mb-4 float-right shadowed rounded"
           @click="preview = null"
         >
-          Hide
+          Close
         </button>
         <h2 class="text-2xl font-bold mb-1">{{ preview.title }}</h2>
         <p class="text-sm text-yellow-300 mb-2">
@@ -95,10 +95,7 @@
           <p><strong>Save to list:</strong></p>
           <div class="flex flex-wrap gap-2">
             <button
-              v-for="[key, list] in [
-                ...Object.entries(defaultLists),
-                ...Object.entries(lists),
-              ]"
+              v-for="[key, list] in [...Object.entries(defaultLists)]"
               :key="key"
               @click="
                 !list.movieIds.includes(preview.id)
@@ -107,11 +104,9 @@
               "
               :class="{
                 'bg-white text-black': list.movieIds.includes(preview.id),
-                'border border-white text-white': !list.movieIds.includes(
-                  preview.id
-                ),
+                'text-white': !list.movieIds.includes(preview.id),
               }"
-              class="px-3 py-1 rounded text-xs"
+              class="px-3 py-1 rounded text-xs border border-white"
             >
               {{ list.title }}
             </button>
@@ -146,9 +141,8 @@
         <div
           class="movie-controls bg-gray-950/90 px-2 py-2 rounded-b-xl flex flex-wrap gap-1.5"
         >
-          <button v-if="showLists" @click="handleCancelMore">&lt;</button>
           <button
-            v-for="list in showLists ? lists : defaultLists"
+            v-for="list in defaultLists"
             :key="list.id"
             @click="
               () => {
@@ -161,16 +155,6 @@
           >
             {{ list.title }}
           </button>
-          <button
-            v-if="!showLists"
-            @click="
-              () => {
-                handleMore();
-              }
-            "
-          >
-            More...
-          </button>
         </div>
       </div>
       <div
@@ -178,7 +162,7 @@
         class="movie load-more flex items-center justify-center cursor-pointer bg-gray-300 rounded-xl"
         @click="loadMoreFeatured"
       >
-        <span class="text-black font-bold text-center">Load More</span>
+        <span class="text-gray-700 font-bold text-center">Load More</span>
       </div>
     </div>
 
@@ -206,7 +190,6 @@ export default {
       movies: [],
       preview: null,
       adding: null,
-      showLists: false,
       selectedList: "f",
       page: 1,
       loadingMore: false,
@@ -232,27 +215,14 @@ export default {
           movies: [],
           movieIds: [],
         },
-      },
-      lists: {
-        1: {
-          id: 1,
-          title: "Friends",
-          movies: [],
-          movieIds: [],
-        },
-        2: {
-          id: 2,
-          title: "Podcast",
-          movies: [],
-          movieIds: [],
-        },
-        3: {
-          id: 3,
-          title: "Faves",
+        s: {
+          id: "s",
+          title: "Seen",
           movies: [],
           movieIds: [],
         },
       },
+      lists: {},
       previewCast: [],
       previewDirector: "",
       previewWatchProviders: [],
@@ -280,6 +250,16 @@ export default {
     // Create a debounced version of the search function
     this.debouncedSearch = debounce(this.executeSearch, 300); // 1-second debounce delay
     console.log(this.lists);
+    const stored = localStorage.getItem("defaultLists");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      for (const key in parsed) {
+        if (this.defaultLists[key]) {
+          this.defaultLists[key].movies = parsed[key].movies || [];
+          this.defaultLists[key].movieIds = parsed[key].movieIds || [];
+        }
+      }
+    }
   },
   computed: {
     filteredMovies() {
@@ -385,21 +365,17 @@ export default {
         ? title.substring(0, maxLength) + "..."
         : title;
     },
-    handleMore() {
-      this.showLists = true;
-    },
-    handleCancelMore() {
-      this.showLists = false;
-    },
     handleListSelect(listKey) {
+      // Close the preview
+      this.preview = null;
+
       if (listKey === "f") {
         this.selectedList = listKey;
         this.fetchFeaturedMovies();
         return;
       }
 
-      const isDefault = listKey === "i" || listKey === "l";
-      const sourceLists = isDefault ? this.defaultLists : this.lists;
+      const sourceLists = this.defaultLists;
 
       this.selectedList = listKey;
       this.movies = sourceLists[listKey]?.movies || [];
@@ -408,30 +384,58 @@ export default {
       this.movies = this.searchMovies;
     },
     handleAddMovie(listKey, movie) {
-      let lists =
-        listKey == "i" || listKey == "l" ? this.defaultLists : this.lists;
-      // Check if the movie already exists in the list using the movie's unique identifier (e.g., id)
-      const movieExists = lists[listKey].movies.some(
-        (existingMovie) => existingMovie.id === movie.id
-      );
+      const id = movie.id;
+      const lists = this.defaultLists;
 
-      // If the movie doesn't exist, add it to the list
-      if (!movieExists) {
-        lists[listKey].movies.push(movie);
-        lists[listKey].movieIds.push(movie.id);
+      if (listKey === "i") {
+        if (!lists.i.movieIds.includes(id)) {
+          lists.i.movies.push(movie);
+          lists.i.movieIds.push(id);
+        }
       }
-      console.log(lists[listKey]);
+
+      if (listKey === "s") {
+        if (!lists.s.movieIds.includes(id)) {
+          lists.s.movies.push(movie);
+          lists.s.movieIds.push(id);
+        }
+        // Remove from Interested
+        this.handleRemoveMovie("i", movie);
+      }
+
+      if (listKey === "l") {
+        // Ensure it's Seen first
+        if (!lists.s.movieIds.includes(id)) {
+          this.handleAddMovie("s", movie);
+        }
+        if (!lists.l.movieIds.includes(id)) {
+          lists.l.movies.push(movie);
+          lists.l.movieIds.push(id);
+        }
+        // Remove from Interested
+        this.handleRemoveMovie("i", movie);
+      }
+
+      this.saveListsToStorage();
     },
     handleRemoveMovie(listKey, movie) {
-      let lists =
-        listKey == "i" || listKey == "l" ? this.defaultLists : this.lists;
-      // Filter out the movie with the matching id
-      lists[listKey].movies = lists[listKey].movies.filter(
-        (existingMovie) => existingMovie.id !== movie.id
-      );
+      const id = movie.id;
+      const lists = this.defaultLists;
+
+      lists[listKey].movies = lists[listKey].movies.filter((m) => m.id !== id);
       lists[listKey].movieIds = lists[listKey].movieIds.filter(
-        (existingMovieId) => existingMovieId !== movie.id
+        (mid) => mid !== id
       );
+
+      // If removing from Seen, also remove from Liked
+      if (listKey === "s" && lists.l.movieIds.includes(id)) {
+        this.handleRemoveMovie("l", movie);
+      }
+
+      this.saveListsToStorage();
+    },
+    saveListsToStorage() {
+      localStorage.setItem("defaultLists", JSON.stringify(this.defaultLists));
     },
     handlePosterClick(event, movie) {
       if (event.target.tagName.toLowerCase() !== "button") {
@@ -533,9 +537,8 @@ nav.lists button.selected {
 }
 
 .movies {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  flex-wrap: wrap;
-  justify-items: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
 }
 
 .movie {
