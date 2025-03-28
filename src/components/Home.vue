@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <nav class="lists bg-white shadow py-2 px-4 text-sm sticky top-0 z-20">
+    <nav class="lists bg-white shadow py-2 text-sm sticky top-0 z-20">
       <div class="clamp flex px-4 justify-between overflow-x-auto">
         <div class="flex">
           <button
