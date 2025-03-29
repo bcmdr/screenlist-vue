@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <nav class="lists bg-white shadow py-2 text-sm sticky top-0 z-20">
-      <div class="clamp flex gap-2 px-4 justify-between overflow-x-auto">
+      <div class="clamp flex px-4 justify-between overflow-x-auto">
         <div v-if="showSearch" class="search flex-1 flex">
           <button @click="showSearch = false">Back</button>
           <label class="hidden" for="movie-search">Search for Movies</label>
@@ -15,7 +15,7 @@
             @input="handleSearch"
             @blur="handleBlurSearch"
             @focus="handleFocusSearch"
-            class="border border-grey-100 shadow rounded-full px-3 py-2 w-full"
+            class="border-l border-l-2 border-l-grey-200 rounded-full px-3 py-2 w-full max-w-xs"
           />
           <!-- <div class="cut-off bg-gray-50 h-10 -m-14"></div> -->
         </div>
@@ -41,7 +41,7 @@
           <button
             @click="toggleSearch"
             :class="{ selected: showSearch }"
-            class="search-button"
+            class="search-button border border-gray-200"
           >
             Search
           </button>
