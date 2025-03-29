@@ -131,11 +131,34 @@
         </div>
       </div>
     </div>
-
-    <div class="movies clamp grid justify-center gap-4 mt-4 mb-4 px-4">
+    <div class="filter-sort px-2 clamp my-4">
+      <div
+        v-if="selectedList == 'f'"
+        class="genre-list text-sm relative z-0 flex items-center gap-2 rounded-full overflow-x-auto scrollbar-none whitespace-nowrap shadow-inner-lr z-0"
+      >
+        <button
+          @click="selectGenre(null)"
+          :class="{ 'bg-gray-800 text-white': selectedGenre === null }"
+          class="px-3 py-1 bg-white text-black rounded-full border"
+        >
+          All Genres
+        </button>
+        <button
+          v-for="genre in genres"
+          :key="genre.id"
+          @click="selectGenre(genre.id)"
+          :class="{ 'bg-gray-800 text-white': selectedGenre === genre.id }"
+          class="px-3 py-1 bg-white text-black rounded-full border"
+        >
+          {{ genre.name }}
+        </button>
+      </div>
+    </div>
+    <div class="movies clamp grid justify-center gap-4 mt-2 mb-4 px-4">
+      <!-- Movie List -->
       <div
         v-for="movie in filteredMovies"
-        :key="movie.id"
+        :key="`movie-${movie.id}`"
         class="movie"
         :class="{ 'no-poster': !movie.poster_path }"
         @click="handlePosterClick($event, movie)"
@@ -160,15 +183,14 @@
         >
           <button
             v-for="list in defaultLists"
-            :key="list.id"
-            @click="
-              () => {
-                !list.movieIds.includes(movie.id)
-                  ? handleAddMovie(list.id, movie)
-                  : handleRemoveMovie(list.id, movie);
-              }
+            :key="`list-${list.id}-${movie.id}`"
+            @click.stop="
+              !list.movieIds.includes(movie.id)
+                ? handleAddMovie(list.id, movie)
+                : handleRemoveMovie(list.id, movie)
             "
             :class="{ selected: list.movieIds.includes(movie.id) }"
+            class="border border-white px-2 py-1 rounded-sm text-xs flex-grow"
           >
             {{ list.title }}
           </button>
@@ -176,6 +198,7 @@
       </div>
       <div
         v-if="selectedList === 'f' && movies.length"
+        :key="'load-more'"
         class="movie load-more flex items-center justify-center cursor-pointer bg-gray-300 rounded-xl"
         @click="loadMoreFeatured"
       >
@@ -196,6 +219,9 @@ export default {
     return {
       query: "",
       movies: [],
+      genres: [],
+      showGenres: true,
+      selectedGenre: null,
       preview: null,
       adding: null,
       selectedList: "f",
@@ -248,7 +274,11 @@ export default {
     emitter.on("focus-search", this.focusSearchField);
     window.addEventListener("scroll", this.handleScroll);
     if (this.selectedList === "f") {
-      this.fetchFeaturedMovies();
+      this.fetchMovies();
+    }
+    // Always fetch genres when the component is mounted
+    if (!this.genres.length) {
+      this.fetchGenres();
     }
   },
   beforeUnmount() {
@@ -284,6 +314,7 @@ export default {
       const nearBottom =
         window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - scrollThreshold;
+
       if (
         nearBottom &&
         this.selectedList === "f" &&
@@ -291,7 +322,7 @@ export default {
         (!this.totalPages || this.page < this.totalPages)
       ) {
         this.page++;
-        this.fetchFeaturedMovies();
+        this.fetchMovies();
       }
     },
     handleSearch() {
@@ -346,28 +377,53 @@ export default {
           console.error("Error fetching movies:", error);
         });
     },
-    fetchFeaturedMovies() {
+    fetchMovies() {
       if (this.loadingMore) return;
+
       this.loadingMore = true;
+
+      const params = {
+        sort_by: "popularity.desc",
+        include_adult: false,
+        region: "CA",
+        page: this.page,
+      };
+
+      // Apply genre filter only when a genre is selected
+      if (this.selectedList === "f" && this.selectedGenre !== null) {
+        params.with_genres = this.selectedGenre;
+      }
+
       tmdb
-        .get("/movie/popular", { params: { page: this.page } })
+        .get("/discover/movie", { params })
         .then((response) => {
-          // Capture total pages from the API response
           this.totalPages = response.data.total_pages;
-          // Filter out adult movies
           const results = response.data.results.filter((movie) => !movie.adult);
+
+          // Deduplicate movies based on ID
+          const newMovies = results.filter(
+            (movie) => !this.featuredLists.f.movieIds.includes(movie.id)
+          );
+
+          // Replace movies on the first page, otherwise append
           if (this.page === 1) {
-            this.featuredLists.f.movies = results;
+            this.featuredLists.f.movies = [...newMovies];
           } else {
-            this.featuredLists.f.movies.push(...results);
+            this.featuredLists.f.movies = [
+              ...this.featuredLists.f.movies,
+              ...newMovies,
+            ];
           }
+
+          // Update the movie IDs for reactivity
           this.featuredLists.f.movieIds = this.featuredLists.f.movies.map(
             (m) => m.id
           );
-          this.movies = this.featuredLists.f.movies;
+          // Assign a new array reference to trigger reactivity
+          this.movies = [...this.featuredLists.f.movies];
         })
         .catch((error) => {
-          console.error("Error fetching featured movies:", error);
+          console.error("Error fetching movies:", error);
         })
         .finally(() => {
           this.loadingMore = false;
@@ -383,19 +439,21 @@ export default {
         : title;
     },
     handleListSelect(listKey) {
-      // Close the preview
       this.preview = null;
+      this.selectedList = listKey;
 
       if (listKey === "f") {
-        this.selectedList = listKey;
-        this.fetchFeaturedMovies();
+        this.page = 1;
+        this.totalPages = null;
+        this.movies = [];
+        this.featuredLists.f.movies = [];
+        this.featuredLists.f.movieIds = [];
+        this.fetchMovies();
       } else {
         const sourceLists = this.defaultLists;
-        this.selectedList = listKey;
         this.movies = sourceLists[listKey]?.movies || [];
       }
 
-      // Scroll to top after loading
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     handleSearchSelect() {
@@ -493,7 +551,7 @@ export default {
         (!this.totalPages || this.page < this.totalPages)
       ) {
         this.page++;
-        this.fetchFeaturedMovies();
+        this.fetchMovies();
       }
     },
     getReleaseStatus(dateStr) {
@@ -530,6 +588,43 @@ export default {
       } else {
         return "";
       }
+    },
+    toggleGenre() {
+      this.showGenres = !this.showGenres;
+    },
+    selectGenre(genreId) {
+      if (this.selectedList !== "f") return;
+
+      // Set the selected genre and reset pagination
+      this.selectedGenre = genreId;
+      this.page = 1;
+      this.totalPages = null;
+      this.loadingMore = false;
+
+      // Clear the movie list before fetching new data
+      this.movies = [];
+      this.featuredLists.f.movies = [];
+      this.featuredLists.f.movieIds = [];
+
+      // Fetch the new genre movies
+      this.fetchMovies();
+    },
+    fetchGenres() {
+      // Avoid redundant API calls if genres are already loaded
+      if (this.genres.length) return;
+
+      tmdb
+        .get("/genre/movie/list", {
+          params: {
+            language: "en-US",
+          },
+        })
+        .then((response) => {
+          this.genres = response.data.genres;
+        })
+        .catch((error) => {
+          console.error("Error fetching genres:", error);
+        });
     },
   },
 };
@@ -614,7 +709,18 @@ nav.lists .search-button.selected {
   @apply bg-gray-500;
 }
 
-.shadow-bottom {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.shadow-inner-lr {
+  @apply shadow-inner relative z-10;
+  box-shadow: inset -4px 0 4px -4px rgba(0, 0, 0, 0.2),
+    inset 4px 0 4px -4px rgba(0, 0, 0, 0.2);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 </style>
