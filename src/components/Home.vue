@@ -10,11 +10,10 @@
           <v-select
             v-model="selectedRegion"
             :options="regionOptions"
-            @input="fetchMovies"
             label="native_name"
             :clearable="false"
             :reduce="(region) => region.iso_3166_1"
-            class="w-full min-w-[150px] max-w-md"
+            class="w-full min-w-[150px]"
           ></v-select>
         </div>
       </div>

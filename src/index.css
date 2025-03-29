@@ -97,3 +97,8 @@
 .vs__selected {
   @apply text-gray-200 text-sm;
 }
+
+.vs__dropdown-menu {
+  overflow-x: hidden;
+  @apply max-w-md;
+}
