@@ -1,8 +1,11 @@
 <template>
   <div class="home">
     <nav class="lists bg-white shadow py-2 text-sm sticky top-0 z-20">
-      <div class="clamp flex px-4 justify-between overflow-x-auto">
-        <div v-if="showSearch" class="search flex-1 flex gap-4 mr-4">
+      <div class="clamp flex px-4 justify-between overflow-x-auto items-center">
+        <div
+          v-if="showSearch"
+          class="search flex-1 flex gap-4 mr-4 items-center -my-1"
+        >
           <label class="hidden" for="movie-search">Search for Movies</label>
           <input
             ref="searchInput"
@@ -14,7 +17,7 @@
             @input="handleSearch"
             @blur="handleBlurSearch"
             @focus="handleFocusSearch"
-            class="border border-grey-200 rounded-full px-3 py-2 w-full flex-1 text-base"
+            class="border border-grey-200 m-1 rounded-full px-3 py-2 w-full flex-1 text-base"
           />
           <button @click="showSearch = false">Back</button>
         </div>
