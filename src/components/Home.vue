@@ -142,6 +142,7 @@
             'px-3 py-1 rounded-full border bg-white text-black appearance-none focus:outline-none active:bg-gray-800 active:text-white hover:bg-gray-800 hover:text-white',
             selectedGenre === null ? 'bg-gray-800 text-white' : '',
           ]"
+          style="appearance: none; -webkit-appearance: none"
         >
           All Genres
         </button>
