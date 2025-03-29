@@ -1,8 +1,28 @@
 <template>
   <div class="home">
     <nav class="lists bg-white shadow py-2 text-sm sticky top-0 z-20">
-      <div class="clamp flex px-4 justify-between overflow-x-auto">
-        <div class="flex">
+      <div class="clamp flex gap-2 px-4 justify-between overflow-x-auto">
+        <div v-if="showSearch" class="search flex-1 flex">
+          <button @click="showSearch = false">Back</button>
+          <label class="hidden" for="movie-search">Search for Movies</label>
+          <input
+            ref="searchInput"
+            id="movie-search"
+            type="text"
+            v-model="query"
+            placeholder="Search movie titles..."
+            autocomplete="off"
+            @input="handleSearch"
+            @blur="handleBlurSearch"
+            @focus="handleFocusSearch"
+            class="border border-grey-100 shadow rounded-full px-3 py-2 w-full"
+          />
+          <!-- <div class="cut-off bg-gray-50 h-10 -m-14"></div> -->
+        </div>
+        <div
+          v-else
+          class="flex gap-2 overflow-x-auto items-center justify-between mr-2"
+        >
           <button
             v-for="[key, list] in [
               ...Object.entries(featuredLists),
@@ -11,28 +31,23 @@
             ]"
             :key="key"
             @click="() => handleListSelect(list.id)"
-            :class="{ selected: selectedList === list.id }"
+            :class="{ 'font-bold': selectedList === list.id }"
+            class="list-button"
           >
             {{ list.title }}
           </button>
         </div>
+        <div class="flex-none">
+          <button
+            @click="toggleSearch"
+            :class="{ selected: showSearch }"
+            class="search-button"
+          >
+            Search
+          </button>
+        </div>
       </div>
     </nav>
-    <div v-if="showSearch" class="search clamp mt-4 mb-4 px-4">
-      <label class="hidden" for="movie-search">Search for Movies</label>
-      <input
-        ref="searchInput"
-        id="movie-search"
-        type="text"
-        v-model="query"
-        placeholder="Search movie titles..."
-        autocomplete="off"
-        @input="handleSearch"
-        @blur="handleBlurSearch"
-        @focus="handleFocusSearch"
-        class="border border-grey-100 shadow rounded-full px-3 py-2 w-full"
-      />
-    </div>
 
     <div
       v-if="preview"
@@ -115,7 +130,10 @@
       </div>
     </div>
 
-    <div class="movies clamp grid gap-4 my-4 px-4" v-if="filteredMovies.length">
+    <div
+      class="movies clamp grid justify-center gap-4 mt-4 mb-4 px-4"
+      v-if="filteredMovies.length"
+    >
       <div
         v-for="movie in filteredMovies"
         :key="movie.id"
@@ -181,9 +199,6 @@ import emitter from "../eventBus";
 
 export default {
   emits: ["unfocus-search", "focus-search"],
-  props: {
-    showSearch: Boolean,
-  },
   data() {
     return {
       query: "",
@@ -194,6 +209,7 @@ export default {
       page: 1,
       loadingMore: false,
       totalPages: null,
+      showSearch: false,
       featuredLists: {
         f: {
           id: "f",
@@ -228,13 +244,13 @@ export default {
       previewWatchProviders: [],
     };
   },
-  watch: {
-    showSearch(val) {
-      if (val) {
-        this.handleSearchSelect();
-      }
-    },
-  },
+  // watch: {
+  //   showSearch(val) {
+  //     if (val) {
+  //       this.handleSearchSelect();
+  //     }
+  //   },
+  // },
   mounted() {
     emitter.on("focus-search", this.focusSearchField);
     window.addEventListener("scroll", this.handleScroll);
@@ -302,6 +318,14 @@ export default {
     },
     handleFocusSearch() {
       emitter.emit("focus-search");
+    },
+    toggleSearch() {
+      this.showSearch = !this.showSearch;
+      if (this.showSearch) {
+        this.$nextTick(() => {
+          this.$refs.searchInput?.focus();
+        });
+      }
     },
     executeSearch() {
       if (this.query.trim() === "") {
@@ -382,7 +406,7 @@ export default {
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     handleSearchSelect() {
-      this.movies = this.searchMovies;
+      // this.movies = this.searchMovies;
     },
     handleAddMovie(listKey, movie) {
       const id = movie.id;
@@ -530,7 +554,7 @@ nav .selected {
 nav.lists button {
   @apply py-2 px-3 rounded cursor-pointer bg-white text-black;
 }
-nav.lists button.selected {
+nav.lists .search-button.selected {
   @apply bg-gray-950 text-white;
 }
 .movie-controls .selected {
@@ -538,8 +562,7 @@ nav.lists button.selected {
 }
 
 .movies {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
 }
 
 .movie {
@@ -596,5 +619,9 @@ nav.lists button.selected {
 .no-poster .movie-info {
   display: block;
   @apply bg-gray-500;
+}
+
+.shadow-bottom {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 </style>

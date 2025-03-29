@@ -34,7 +34,7 @@
             </div>
           </div>
         </div> -->
-        <button
+        <!-- <button
           @click="handleSearchClick"
           :class="[
             'text-sm rounded px-3 py-1 border',
@@ -44,7 +44,7 @@
           ]"
         >
           Search
-        </button>
+        </button> -->
       </div>
     </div>
   </nav>
