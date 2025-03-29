@@ -132,10 +132,7 @@
       </div>
     </div>
 
-    <div
-      class="movies clamp grid justify-center gap-4 mt-4 mb-4 px-4"
-      v-if="filteredMovies.length"
-    >
+    <div class="movies clamp grid justify-center gap-4 mt-4 mb-4 px-4">
       <div
         v-for="movie in filteredMovies"
         :key="movie.id"
@@ -184,12 +181,6 @@
       >
         <span class="text-gray-700 font-bold text-center">Load More</span>
       </div>
-    </div>
-
-    <div v-else>
-      <p v-if="query" class="text-center">
-        No results found. Try searching for another title.
-      </p>
     </div>
   </div>
 </template>
