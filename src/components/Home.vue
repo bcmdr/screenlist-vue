@@ -4,7 +4,7 @@
       <div class="clamp flex px-4 justify-between overflow-x-auto items-center">
         <div
           v-if="showSearch"
-          class="search flex-1 flex gap-4 mr-4 items-center -my-1"
+          class="search flex-1 flex gap-4 mr-4 items-center"
         >
           <label class="hidden" for="movie-search">Search for Movies</label>
           <input
