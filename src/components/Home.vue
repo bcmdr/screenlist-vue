@@ -138,8 +138,10 @@
       >
         <button
           @click="selectGenre(null)"
-          :class="{ 'bg-gray-800 text-white': selectedGenre === null }"
-          class="px-3 py-1 bg-white text-black rounded-full border"
+          :class="[
+            'px-3 py-1 rounded-full border bg-white text-black',
+            selectedGenre === null ? 'bg-gray-800 text-white !important' : '',
+          ]"
         >
           All Genres
         </button>
