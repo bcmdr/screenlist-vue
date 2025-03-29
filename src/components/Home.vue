@@ -131,7 +131,7 @@
         </div>
       </div>
     </div>
-    <div class="filter-sort px-2 clamp my-4">
+    <div class="filter-sort px-4 clamp my-4">
       <div
         v-if="selectedList == 'f'"
         class="genre-list text-sm relative z-0 flex items-center gap-2 rounded-full overflow-x-auto scrollbar-none whitespace-nowrap shadow-inner-lr z-0"
