@@ -134,13 +134,13 @@
     <div class="filter-sort px-4 clamp my-4">
       <div
         v-if="selectedList == 'f'"
-        class="genre-list text-sm relative z-0 flex items-center gap-2 rounded-full overflow-x-auto scrollbar-none whitespace-nowrap shadow-inner-lr z-0"
+        class="text-black genre-list text-sm relative z-0 flex items-center gap-2 rounded-full overflow-x-auto scrollbar-none whitespace-nowrap shadow-inner-lr z-0"
       >
         <button
           @click="selectGenre(null)"
           :class="[
-            'px-3 py-1 rounded-full border bg-white text-black',
-            selectedGenre === null ? 'bg-gray-800 text-white !important' : '',
+            'px-3 py-1 rounded-full border bg-white text-black appearance-none focus:outline-none active:bg-gray-800 active:text-white hover:bg-gray-800 hover:text-white',
+            selectedGenre === null ? 'bg-gray-800 text-white' : '',
           ]"
         >
           All Genres
@@ -150,7 +150,7 @@
           :key="genre.id"
           @click="selectGenre(genre.id)"
           :class="{ 'bg-gray-800 text-white': selectedGenre === genre.id }"
-          class="px-3 py-1 bg-white text-black rounded-full border"
+          class="px-3 py-1 bg-white rounded-full border"
         >
           {{ genre.name }}
         </button>
