@@ -1,8 +1,8 @@
 <template>
   <div class="home">
     <nav class="lists bg-white shadow py-2 text-sm sticky top-0 z-20">
-      <div class="clamp flex px-4 gap-2 justify-between overflow-x-auto">
-        <div v-if="showSearch" class="search flex-1 flex gap-2">
+      <div class="clamp flex px-4 justify-between overflow-x-auto">
+        <div v-if="showSearch" class="search flex-1 flex gap-4 mr-4">
           <label class="hidden" for="movie-search">Search for Movies</label>
           <input
             ref="searchInput"
@@ -20,7 +20,7 @@
         </div>
         <div
           v-else
-          class="flex gap-2 overflow-x-auto items-center justify-between mr-2"
+          class="flex gap-4 overflow-x-auto items-center justify-between pr-2"
         >
           <button
             v-for="[key, list] in [
@@ -40,7 +40,7 @@
           <button
             @click="toggleSearch"
             :class="{ selected: showSearch }"
-            class="search-button border border-gray-200"
+            class="search-button px-3 rounded-lg border border-gray-200 shadow"
           >
             Search
           </button>
@@ -551,7 +551,7 @@ nav .selected {
 }
 
 nav.lists button {
-  @apply py-2 px-3 rounded cursor-pointer bg-white text-black;
+  @apply py-2 cursor-pointer text-black;
 }
 nav.lists .search-button.selected {
   @apply bg-gray-950 text-white;
