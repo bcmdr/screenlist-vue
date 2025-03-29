@@ -14,7 +14,7 @@
             @input="handleSearch"
             @blur="handleBlurSearch"
             @focus="handleFocusSearch"
-            class="border border-grey-200 rounded-full px-3 py-2 w-full flex-1"
+            class="border border-grey-200 rounded-full px-3 py-2 w-full flex-1 text-base"
           />
           <button @click="showSearch = false">Back</button>
         </div>
