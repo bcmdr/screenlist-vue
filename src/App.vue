@@ -1,11 +1,5 @@
 <template>
   <div class="page">
-    <TopNav
-      @toggle-search="activateSearchView"
-      :showSearch="showSearch"
-      :focusSearch="focusSearch"
-      class="page-top"
-    />
     <main class="page-body">
       <router-view :show-search="showSearch" />
     </main>

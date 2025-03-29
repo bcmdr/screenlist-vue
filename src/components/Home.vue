@@ -1,5 +1,25 @@
 <template>
   <div class="home">
+    <nav class="flex-shrink-0 text-white bg-gray-950 flex">
+      <div class="clamp flex items-center gap-2 px-4 py-3">
+        <div class="logo">
+          <a href="/">ScreenList</a>
+        </div>
+        <div class="region-select">
+          <label for="region" class="hidden">Region:</label>
+          <v-select
+            v-model="selectedRegion"
+            :options="regionOptions"
+            @input="fetchMovies"
+            label="native_name"
+            :clearable="false"
+            :reduce="(region) => region.iso_3166_1"
+            class="w-full min-w-[150px] max-w-md"
+          ></v-select>
+        </div>
+      </div>
+    </nav>
+
     <nav class="lists bg-white shadow py-2 text-sm sticky top-0 z-20">
       <div class="clamp flex px-4 justify-between overflow-x-auto items-center">
         <div
@@ -16,6 +36,7 @@
             autocomplete="off"
             @input="handleSearch"
             @blur="handleBlurSearch"
+            genre
             @focus="handleFocusSearch"
             class="border border-grey-200 m-1 rounded-full px-3 py-2 w-full flex-1 text-base"
           />
@@ -87,7 +108,7 @@
           <p><strong>Director:</strong> {{ previewDirector }}</p>
           <p><strong>Cast:</strong> {{ previewCast.join(", ") }}</p>
           <p>
-            <strong>Streaming in Canada:</strong>
+            <strong>Streaming:</strong>
             <span
               v-if="previewWatchProviders.length"
               class="flex flex-wrap gap-2 mt-1"
@@ -95,7 +116,7 @@
               <a
                 v-for="provider in previewWatchProviders"
                 :key="provider.provider_id"
-                :href="`https://www.themoviedb.org/movie/${preview.id}/watch`"
+                :href="`https://www.themoviedb.org/movie/${preview.id}/watch?locale=${selectedRegion}`"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-block"
@@ -227,6 +248,9 @@ export default {
     return {
       query: "",
       movies: [],
+      dropdownWidth: "auto",
+      regionOptions: [],
+      selectedRegion: null,
       genres: [],
       showGenres: true,
       selectedGenre: null,
@@ -271,14 +295,22 @@ export default {
       previewWatchProviders: [],
     };
   },
-  // watch: {
-  //   showSearch(val) {
-  //     if (val) {
-  //       this.handleSearchSelect();
-  //     }
-  //   },
-  // },
+  watch: {
+    selectedRegion(newValue) {
+      if (typeof newValue === "string") {
+        localStorage.setItem("selectedRegion", newValue);
+      } else if (newValue && newValue.iso_3166_1) {
+        localStorage.setItem("selectedRegion", newValue.iso_3166_1);
+      }
+      this.fetchMovies(); // Trigger movie fetch when region changes
+      this.updateStreamingProviders(); // Update streaming providers when region changes
+      if (this.preview) {
+        this.fetchPreviewDetails(this.preview); // Update preview if open
+      }
+    },
+  },
   mounted() {
+    this.fetchRegions();
     emitter.on("focus-search", this.focusSearchField);
     window.addEventListener("scroll", this.handleScroll);
     if (this.selectedList === "f") {
@@ -312,8 +344,41 @@ export default {
     filteredMovies() {
       return (this.movies || []).filter((movie) => this.isAcceptable(movie));
     },
+    regionName() {
+      const region = this.regionOptions.find(
+        (region) => region.iso_3166_1 === this.selectedRegion
+      );
+      return region ? region.native_name : "Unknown Region";
+    },
   },
   methods: {
+    async fetchRegions() {
+      try {
+        // Fetch the list of available regions from TMDB
+        const response = await tmdb.get("/watch/providers/regions");
+        this.regionOptions = response.data.results;
+
+        // Load the saved region from local storage
+        const savedRegion = localStorage.getItem("selectedRegion");
+
+        // If a saved region exists and is valid, set it; otherwise, default to "CA"
+        if (savedRegion) {
+          const matchingRegion = this.regionOptions.find(
+            (region) => region.iso_3166_1 === savedRegion
+          );
+          if (matchingRegion) {
+            this.selectedRegion = savedRegion;
+          } else {
+            this.selectedRegion = "CA"; // Default to Canada if not found
+          }
+        } else {
+          this.selectedRegion = "CA"; // Default to Canada if not saved
+        }
+      } catch (error) {
+        console.error("Error fetching regions:", error);
+        this.selectedRegion = "CA"; // Fallback to CA on error
+      }
+    },
     isAcceptable(movie) {
       return !movie.adult && movie?.release_dates?.certification !== null;
     },
@@ -371,7 +436,7 @@ export default {
           params: {
             query: this.query,
             include_adult: false, // Exclude adult content
-            region: "CA",
+            region: this.selectedRegion,
           },
         })
         .then((response) => {
@@ -393,11 +458,10 @@ export default {
       const params = {
         sort_by: "popularity.desc",
         include_adult: false,
-        region: "CA",
+        region: this.selectedRegion, // Use the selected region
         page: this.page,
       };
 
-      // Apply genre filter only when a genre is selected
       if (this.selectedList === "f" && this.selectedGenre !== null) {
         params.with_genres = this.selectedGenre;
       }
@@ -407,13 +471,9 @@ export default {
         .then((response) => {
           this.totalPages = response.data.total_pages;
           const results = response.data.results.filter((movie) => !movie.adult);
-
-          // Deduplicate movies based on ID
           const newMovies = results.filter(
             (movie) => !this.featuredLists.f.movieIds.includes(movie.id)
           );
-
-          // Replace movies on the first page, otherwise append
           if (this.page === 1) {
             this.featuredLists.f.movies = [...newMovies];
           } else {
@@ -422,12 +482,9 @@ export default {
               ...newMovies,
             ];
           }
-
-          // Update the movie IDs for reactivity
           this.featuredLists.f.movieIds = this.featuredLists.f.movies.map(
             (m) => m.id
           );
-          // Assign a new array reference to trigger reactivity
           this.movies = [...this.featuredLists.f.movies];
         })
         .catch((error) => {
@@ -542,9 +599,11 @@ export default {
       });
 
       tmdb.get(`/movie/${id}/watch/providers`).then((res) => {
-        const ca = res.data.results?.CA;
-        if (ca && ca.flatrate) {
-          this.previewWatchProviders = ca.flatrate;
+        const regionData = res.data.results?.[this.selectedRegion];
+        if (regionData && regionData.flatrate) {
+          this.previewWatchProviders = regionData.flatrate;
+        } else {
+          this.previewWatchProviders = [];
         }
       });
     },
@@ -634,13 +693,29 @@ export default {
           console.error("Error fetching genres:", error);
         });
     },
+    updateStreamingProviders() {
+      if (this.preview) {
+        const id = this.preview.id;
+        tmdb.get(`/movie/${id}/watch/providers`).then((res) => {
+          const regionData = res.data.results?.[this.selectedRegion];
+          if (regionData && regionData.flatrate) {
+            this.previewWatchProviders = regionData.flatrate;
+          } else {
+            this.previewWatchProviders = [];
+          }
+        });
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-.container {
-  justify-content: center;
+.logo a {
+  margin: 0;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
 }
 
 nav .selected {
@@ -730,5 +805,26 @@ nav.lists .search-button.selected {
 .scrollbar-none {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+}
+
+.home {
+  --vs-controls-color: rgb(243, 244, 246); /* Tailwind gray-100 */
+  --vs-border-color: none;
+
+  --vs-dropdown-bg: rgb(255, 255, 255); /* Tailwind white */
+  --vs-dropdown-color: rgb(3, 7, 18); /* Tailwind gray-800 */
+  --vs-dropdown-option-color: rgb(3, 7, 18); /* Tailwind gray-800 */
+
+  --vs-selected-bg: rgb(75, 85, 99); /* Tailwind gray-700 */
+  --vs-selected-color: rgb(255, 255, 255); /* Tailwind white */
+
+  --vs-search-input-color: rgb(243, 244, 246); /* Tailwind gray-100 */
+
+  --vs-dropdown-option--active-bg: rgb(3, 7, 18); /* Tailwind gray-950 */
+  --vs-dropdown-option--active-color: rgb(
+    243,
+    244,
+    246
+  ); /* Tailwind gray-100 */
 }
 </style>
