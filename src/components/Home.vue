@@ -139,10 +139,11 @@
         <button
           @click="selectGenre(null)"
           :class="[
-            'px-3 py-1 rounded-full border bg-white text-black appearance-none focus:outline-none active:bg-gray-800 active:text-white hover:bg-gray-800 hover:text-white',
-            selectedGenre === null ? 'bg-gray-800 text-white' : '',
+            'px-3 py-1 rounded-full border appearance-none focus:outline-none active:bg-gray-800 active:text-white hover:bg-gray-800 hover:text-white',
+            selectedGenre === null
+              ? 'bg-gray-800 text-white'
+              : 'bg-white text-black',
           ]"
-          style="appearance: none; -webkit-appearance: none"
         >
           All Genres
         </button>
@@ -150,8 +151,12 @@
           v-for="genre in genres"
           :key="genre.id"
           @click="selectGenre(genre.id)"
-          :class="{ 'bg-gray-800 text-white': selectedGenre === genre.id }"
-          class="px-3 py-1 bg-white rounded-full border"
+          :class="[
+            'px-3 py-1 rounded-full border appearance-none focus:outline-none active:bg-gray-800 active:text-white hover:bg-gray-800 hover:text-white',
+            selectedGenre === genre.id
+              ? 'bg-gray-800 text-white'
+              : 'bg-white text-black',
+          ]"
         >
           {{ genre.name }}
         </button>
